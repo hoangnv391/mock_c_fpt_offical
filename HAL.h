@@ -1,0 +1,17 @@
+#ifndef HAL_H
+    #define HAL_H
+    
+    #include <stdint.h>
+    #include <stdlib.h>
+    
+    /*******************************************************************************
+     * API
+     ******************************************************************************/
+    uint8_t open_file(char *str);
+    uint8_t set_file_ptr_position(long int offset, uint8_t whence);
+    uint64_t HAL_read_sector(uint32_t index, uint8_t *buff);
+    uint64_t HAT_read_multi_sector(uint32_t index, uint32_t num, uint8_t *buff);
+    uint64_t HAL_read_bytes_from_file(long int offset, uint8_t whence,
+                                      uint16_t number_of_bytes, uint8_t *buff);
+
+#endif /* HAL_H */
