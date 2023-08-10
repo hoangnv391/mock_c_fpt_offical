@@ -187,12 +187,20 @@ uint32_t print_entry_from_sector(uint32_t physical_sector_index)
             if (entry_type == _LFN)
             {
                 printf("%d. ", index);
-                print_file_name_from_LNF_entry((FAT12_LFN_ENTRY_Typedef *)(entry));
                 index++;
+                while (entry_type == _LFN)
+                {
+                    print_file_name_from_LNF_entry((FAT12_LFN_ENTRY_Typedef *)(entry));
+                    number_of_jump_bytes += SIZE_OF_ENTRY_IN_BYTES;
+                    HAL_read_bytes_from_file(number_of_jump_bytes, SEEK_SET, SIZE_OF_ENTRY_IN_BYTES, (uint8_t *)(&buff));
+                    entry = (FAT12_ENTRY_Typedef *)(&buff);
+                    entry_type = check_type_of_entry(entry);
+                }
                 printf("\n");
                 number_of_LFN_entry++;
             }
-            else if (entry_type == _FILE)
+
+            if (entry_type == _FILE)
             {
                 uint16_t starting_cluster_number = *(uint16_t *)(entry->STARTING_CLUSTER_NUMBER);
                 CLUSTER_NODE_Typedef *new_node = init_node(starting_cluster_number, _FILE);
@@ -213,7 +221,8 @@ uint32_t print_entry_from_sector(uint32_t physical_sector_index)
                     printf("\n");
                 }
             }
-            else if (entry_type == _FOLDER)
+            
+            if (entry_type == _FOLDER)
             {
                 uint16_t starting_cluster_number = *(uint16_t *)(entry->STARTING_CLUSTER_NUMBER);
                 CLUSTER_NODE_Typedef *new_node = init_node(starting_cluster_number, _FOLDER);
