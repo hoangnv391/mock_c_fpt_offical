@@ -49,10 +49,10 @@ int main()
 
                         if (chosen_node->CLUSTER_TYPE == _FOLDER)
                         {    
-                            printf("\n");
+                            // printf("\n");
                             physical_sector_index_of_current_folder = PHYSICAL_SECTOR_NUMBER(chosen_node->STARTING_CLUSTER_NUMBER);
                             physical_sector_index_of_parent_dir = print_entry_from_sector(physical_sector_number);
-                            printf("\n da chon vao folder, vi tri cha la %d, vi tri cua folder la %d", \
+                            printf("Da chon vao folder, vi tri cha la %d, vi tri cua folder la %d", \
                                     physical_sector_index_of_parent_dir, physical_sector_index_of_current_folder);
                         }
                         else if (chosen_node->CLUSTER_TYPE == _FILE)

@@ -175,11 +175,11 @@ uint32_t print_entry_from_sector(uint32_t physical_sector_index)
     FAT12_ENTRY_Typedef* entry = NULL;
     uint8_t buff[32] = {0};
     int index = 0;
+    HAL_read_bytes_from_file(number_of_jump_bytes, SEEK_SET, SIZE_OF_ENTRY_IN_BYTES, (uint8_t *)(&buff));
+    entry = (FAT12_ENTRY_Typedef *)(&buff);
 
-    do
+    while (entry_is_empty((FAT12_ENTRY_Typedef*)(&buff)) == 1)
     {
-        HAL_read_bytes_from_file(number_of_jump_bytes, SEEK_SET, SIZE_OF_ENTRY_IN_BYTES, (uint8_t *)(&buff));
-        entry = (FAT12_ENTRY_Typedef *)(&buff);
         if (*(uint8_t*)(entry) != SIGNATURE_FIRST_BYTE_OF_FOLDER_ENTRY)
         {
             uint8_t entry_type = check_type_of_entry(entry);
@@ -248,7 +248,9 @@ uint32_t print_entry_from_sector(uint32_t physical_sector_index)
             }
         }
         number_of_jump_bytes += SIZE_OF_ENTRY_IN_BYTES;
-    } while (entry_is_empty((FAT12_ENTRY_Typedef*)(&buff)) == 1);
+        HAL_read_bytes_from_file(number_of_jump_bytes, SEEK_SET, SIZE_OF_ENTRY_IN_BYTES, (uint8_t *)(&buff));
+        entry = (FAT12_ENTRY_Typedef *)(&buff);
+    } 
     // printf("\nFirst cluster number of parent dir: %d\n", physical_sector_index_of_parent_dir);
     // show_current_node();
     // printf("\n");
