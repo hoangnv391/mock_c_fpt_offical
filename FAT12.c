@@ -19,7 +19,8 @@ int32_t get_entry_value_from_a_pair_cluster_entry\
         (FAT12_PAIR_CLUSTER_Typedef pair_entry, uint8_t order);
 uint16_t get_physical_sector_of_root();
 void read_file_on_multi_sector(uint16_t starting_cluster_number);
-void print_buffer(uint8_t *buff);
+static void print_buffer(uint8_t *buff);
+void setup_FAT12_file();
 
 /*******************************************************************************
  * Variables
@@ -68,7 +69,7 @@ void set_regions_address()
         + number_of_rdet * SIZE_OF_ENTRY_IN_BYTES;
 
     s_physical_sector_of_root = SIZE_OF_BOOT_SECTOR_IN_SECTORS + s_number_of_fat * s_number_of_sector_per_fat;
-    printf("Starting sector of root: %d\n", s_physical_sector_of_root);
+    // printf("Starting sector of root: %d\n", s_physical_sector_of_root);
     return;
 }
 
@@ -221,7 +222,7 @@ uint32_t print_entry_from_sector(uint32_t physical_sector_index)
                     printf("\n");
                 }
             }
-            
+
             if (entry_type == _FOLDER)
             {
                 uint16_t starting_cluster_number = *(uint16_t *)(entry->STARTING_CLUSTER_NUMBER);
@@ -323,7 +324,7 @@ void read_file_on_multi_sector(uint16_t starting_cluster_number)
     // printf("~");
 }
 
-void print_buffer(uint8_t* buff)
+static void print_buffer(uint8_t* buff)
 {
     uint8_t *temp = buff;
     while (*temp != 0)
@@ -331,4 +332,9 @@ void print_buffer(uint8_t* buff)
         printf("%c", *temp);
         temp++;
     }
+}
+
+void setup_FAT12_file()
+{
+    print_entry_from_sector(s_physical_sector_of_root);
 }

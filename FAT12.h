@@ -104,5 +104,6 @@
             (FAT12_PAIR_CLUSTER_Typedef pair_entry, uint8_t order);
     uint16_t get_physical_sector_of_root();
     void read_file_on_multi_sector(uint16_t starting_cluster_number);
+    void setup_FAT12_file();
 
 #endif /* FAT12_H */
