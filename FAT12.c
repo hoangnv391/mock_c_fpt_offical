@@ -192,8 +192,7 @@ uint32_t print_entry_from_sector(uint32_t physical_sector_index)
                 printf("\n");
                 number_of_LFN_entry++;
             }
-
-            if (entry_type == _FILE)
+            else if (entry_type == _FILE)
             {
                 uint16_t starting_cluster_number = *(uint16_t *)(entry->STARTING_CLUSTER_NUMBER);
                 CLUSTER_NODE_Typedef *new_node = init_node(starting_cluster_number, _FILE);
@@ -214,7 +213,7 @@ uint32_t print_entry_from_sector(uint32_t physical_sector_index)
                     printf("\n");
                 }
             }
-            if (entry_type == _FOLDER)
+            else if (entry_type == _FOLDER)
             {
                 uint16_t starting_cluster_number = *(uint16_t *)(entry->STARTING_CLUSTER_NUMBER);
                 CLUSTER_NODE_Typedef *new_node = init_node(starting_cluster_number, _FOLDER);
@@ -303,11 +302,15 @@ void read_file_on_multi_sector(uint16_t starting_cluster_number)
     {
         physical_sector_number = PHYSICAL_SECTOR_NUMBER(next_cluster_number);
         uint8_t buff[512] = {0};
-        // printf("Next cluster number: %d\n", next_cluster_number);
+        // printf("%d ", next_cluster_number);
         amount_of_read_bytes = HAL_read_sector(physical_sector_number, (uint8_t *)(&buff));
         print_buffer((uint8_t *)(&buff));
         next_cluster_number = get_entry_value_from_FAT(next_cluster_number);
-    } while (next_cluster_number != EOF_VALUE_OF_SECTOR && next_cluster_number != -1);
+    // } while (next_cluster_number != EOF_VALUE_OF_SECTOR && next_cluster_number != -1);
+    } while (next_cluster_number >= MIN_VALUE_OF_DATA_CLUSTER &&\
+            next_cluster_number <= MAX_VALUE_OF_DATA_CLUSTER &&\
+            next_cluster_number != -1);
+
     // printf("~");
 }
 
