@@ -308,7 +308,7 @@ void read_file_on_multi_sector(uint16_t starting_cluster_number)
         print_buffer((uint8_t *)(&buff));
         next_cluster_number = get_entry_value_from_FAT(next_cluster_number);
     } while (next_cluster_number != EOF_VALUE_OF_SECTOR && next_cluster_number != -1);
-    printf("~");
+    // printf("~");
 }
 
 void print_buffer(uint8_t* buff)

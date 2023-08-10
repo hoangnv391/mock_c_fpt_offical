@@ -26,7 +26,8 @@ int main()
             if (choice == -1 && physical_sector_index_of_parent_dir != 0)
             {
                 // delete_entire_from_current_node();
-                printf("Chay vao -1, vi tri cha: %d\n", physical_sector_index_of_parent_dir);
+                // printf("Chay vao -1, vi tri cha: %d\n", physical_sector_index_of_parent_dir);
+                system("cls");
                 physical_sector_index_of_parent_dir =
                     print_entry_from_sector(physical_sector_index_of_parent_dir);
                 // printf("Quay ve vi tri: %d", physical_sector_index_of_parent_dir);
@@ -51,6 +52,7 @@ int main()
                         {    
                             // printf("\n");
                             physical_sector_index_of_current_folder = PHYSICAL_SECTOR_NUMBER(chosen_node->STARTING_CLUSTER_NUMBER);
+                            system("cls");
                             physical_sector_index_of_parent_dir = print_entry_from_sector(physical_sector_number);
                             printf("Da chon vao folder, vi tri cha la %d, vi tri cua folder la %d (neu folder trong, chi nhap -1 de quay ve)", \
                                     physical_sector_index_of_parent_dir, physical_sector_index_of_current_folder);
@@ -68,6 +70,7 @@ int main()
                             // int32_t result = get_entry_value_from_FAT(chosen_node->STARTING_CLUSTER_NUMBER);
                             // printf("\nThis is a cluster value: %d", result);
                             // read_file_on_multi_sector(chosen_node->STARTING_CLUSTER_NUMBER);
+                            system("cls");
                             read_file_on_multi_sector(chosen_node->STARTING_CLUSTER_NUMBER);
                             printf("\nDa chon vao file co cluster bat dau la %d, vi tri cha: %d, hay nhap -1 de quay ve\n",\
                                 chosen_node->STARTING_CLUSTER_NUMBER, physical_sector_index_of_parent_dir);
