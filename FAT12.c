@@ -19,6 +19,7 @@ int32_t get_entry_value_from_a_pair_cluster_entry\
         (FAT12_PAIR_CLUSTER_Typedef pair_entry, uint8_t order);
 uint16_t get_physical_sector_of_root();
 void read_file_on_multi_sector(uint16_t starting_cluster_number);
+void print_buffer(uint8_t *buff);
 
 /*******************************************************************************
  * Variables
@@ -302,8 +303,20 @@ void read_file_on_multi_sector(uint16_t starting_cluster_number)
     {
         physical_sector_number = PHYSICAL_SECTOR_NUMBER(next_cluster_number);
         uint8_t buff[512] = {0};
-        printf("Next cluster number: %d\n", next_cluster_number);
+        // printf("Next cluster number: %d\n", next_cluster_number);
         amount_of_read_bytes = HAL_read_sector(physical_sector_number, (uint8_t *)(&buff));
+        print_buffer((uint8_t *)(&buff));
         next_cluster_number = get_entry_value_from_FAT(next_cluster_number);
     } while (next_cluster_number != EOF_VALUE_OF_SECTOR && next_cluster_number != -1);
+    printf("~");
+}
+
+void print_buffer(uint8_t* buff)
+{
+    uint8_t *temp = buff;
+    while (*temp != 0)
+    {
+        printf("%c", *temp);
+        temp++;
+    }
 }

@@ -98,11 +98,13 @@ CLUSTER_NODE_Typedef* take_node_from_current_by_index(uint32_t index)
         temp = temp->NEXT;
         index--;
     }
-    // if (temp != NULL)
-    // {
-    // printf("Your choice - starting cluster number is %d and type is %d",\
-    //  temp->STARTING_CLUSTER_NUMBER);
-    // }
+    /*
+    if (temp != NULL)
+    {
+    printf("Your choice - starting cluster number is %d and type is %d",\
+     temp->STARTING_CLUSTER_NUMBER);
+    }
+    */
     return temp;
     // printf("Choice choice: %d", temp->STARTING_CLUSTER_NUMBER);
 }

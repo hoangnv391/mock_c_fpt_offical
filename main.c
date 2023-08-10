@@ -52,7 +52,7 @@ int main()
                             // printf("\n");
                             physical_sector_index_of_current_folder = PHYSICAL_SECTOR_NUMBER(chosen_node->STARTING_CLUSTER_NUMBER);
                             physical_sector_index_of_parent_dir = print_entry_from_sector(physical_sector_number);
-                            printf("Da chon vao folder, vi tri cha la %d, vi tri cua folder la %d", \
+                            printf("Da chon vao folder, vi tri cha la %d, vi tri cua folder la %d (neu folder trong, chi nhap -1 de quay ve)", \
                                     physical_sector_index_of_parent_dir, physical_sector_index_of_current_folder);
                         }
                         else if (chosen_node->CLUSTER_TYPE == _FILE)
@@ -68,8 +68,9 @@ int main()
                             // int32_t result = get_entry_value_from_FAT(chosen_node->STARTING_CLUSTER_NUMBER);
                             // printf("\nThis is a cluster value: %d", result);
                             // read_file_on_multi_sector(chosen_node->STARTING_CLUSTER_NUMBER);
-                            printf("\nDa chon vao file co cluster bat dau la %d, vi tri cha: %d\n", chosen_node->STARTING_CLUSTER_NUMBER, physical_sector_index_of_parent_dir);
                             read_file_on_multi_sector(chosen_node->STARTING_CLUSTER_NUMBER);
+                            printf("\nDa chon vao file co cluster bat dau la %d, vi tri cha: %d, hay nhap -1 de quay ve\n",\
+                                chosen_node->STARTING_CLUSTER_NUMBER, physical_sector_index_of_parent_dir);
                         }
                     }
                 }
@@ -80,6 +81,6 @@ int main()
             }
         }
     }
-    
+    printf("Ket thuc chuong trinh!!!\n");
     return 0;
 }
