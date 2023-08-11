@@ -41,7 +41,6 @@ int main()
                 physical_sector_index_of_parent_dir =
                     print_entry_from_sector(physical_sector_index_of_parent_dir);
                 // printf("Quay ve vi tri: %d", physical_sector_index_of_parent_dir);
-
             }
             else
             {
