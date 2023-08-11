@@ -66,6 +66,7 @@ void print_linked_list()
         }
         
     }
+    return;
 }
 
 void set_current_node(CLUSTER_NODE_Typedef* node)
@@ -88,6 +89,7 @@ void show_current_node()
 {
     printf("Starting cluster number of current node is %d, type is %d", \
         s_current_node->STARTING_CLUSTER_NUMBER, s_current_node->CLUSTER_TYPE);
+    return;
 }
 
 CLUSTER_NODE_Typedef* take_node_from_current_by_index(uint32_t index)

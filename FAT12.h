@@ -10,10 +10,16 @@
      ******************************************************************************/
     #define SIZE_OF_ENTRY_IN_BYTES 32u
     #define SIZE_OF_BOOT_SECTOR_IN_SECTORS 1u
+
     #define SIGNATURE_BYTE_OF_LFN_ENTRY 0x0F
+    #define NUMBER_OF_LOW_FILE_NAME_CHARACTER 5
+    #define NUMBER_OF_MID_FILE_NAME_CHARACTER 6
+    #define NUMBER_OF_HIGH_FILE_NAME_CHARACTER 5
+
     #define SIGNATURE_FIRST_BYTE_OF_FOLDER_ENTRY 0x2E
     #define SIGNATURE_FIRST_BYTE_OF_FOLDER_ENTRY 0x2E
     #define SIGNATURE_FIRST_TWO_BYTES_OF_FOLDER_ENTRY 0x2E2E
+
     #define MIN_VALUE_OF_DATA_CLUSTER 0x002
     #define MAX_VALUE_OF_DATA_CLUSTER 0xFEF
 
@@ -95,15 +101,15 @@
     /*******************************************************************************
      * API
      ******************************************************************************/
-    void set_boot_sector();
-    void set_regions_address();
-    void print_offset_of_regions();
+    int8_t set_boot_sector();
+    int8_t set_regions_address();
+    int8_t print_offset_of_regions();
     uint32_t print_entry_from_sector(uint32_t number_of_sector);
     int32_t get_entry_value_from_FAT(uint16_t number_of_cluster);
     int32_t get_entry_value_from_a_pair_cluster_entry\
             (FAT12_PAIR_CLUSTER_Typedef pair_entry, uint8_t order);
     uint16_t get_physical_sector_of_root();
     void read_file_on_multi_sector(uint16_t starting_cluster_number);
-    void setup_FAT12_file();
+    int8_t setup_FAT12_file();
 
 #endif /* FAT12_H */

@@ -10,11 +10,11 @@
 /*******************************************************************************
  * Prototypes
  ******************************************************************************/
-uint8_t open_file(char *str);
-uint8_t set_file_ptr_position(long int offset, uint8_t whence);
-uint64_t HAL_read_sector(uint32_t index, uint8_t *buff);
+int8_t open_file(char *str);
+int8_t set_file_ptr_position(long int offset, uint8_t whence);
+int32_t HAL_read_sector(uint32_t index, uint8_t *buff);
 int32_t HAL_read_multi_sector(uint32_t index, uint32_t num, uint8_t *buff);
-uint64_t HAL_read_bytes_from_file(long int offset, uint8_t whence,
+int32_t HAL_read_bytes_from_file(long int offset, uint8_t whence,
                                   uint16_t number_of_bytes, uint8_t *buff);
 
 /*******************************************************************************
@@ -25,31 +25,53 @@ static FILE *s_file = NULL;
 /*******************************************************************************
  * Code
  ******************************************************************************/
-uint8_t open_file(char *str)
+int8_t open_file(char *str)
 {
+    int8_t status = 0u;
     s_file = fopen(str, "r");
     if (s_file == NULL)
     {
-        return -1;
+        status = _STATUS_FAIL;
     }
-    return 1;
+    else
+    {
+        status = _STATUS_SUCCESS;
+    }
+    return status;
 }
 
-uint8_t set_file_ptr_position (long int offset, uint8_t whence)
-{   // This function returns zero if successful, or else it returns a non-zero value. 
-    return fseek(s_file, offset, whence); 
+int8_t set_file_ptr_position (long int offset, uint8_t whence)
+{   
+    int8_t status = 0u;
+
+    if (fseek(s_file, offset, whence) == 0)
+    {
+        status = _STATUS_SUCCESS;
+    }
+    else
+    {
+        status = _STATUS_FAIL;
+    }
+    return status;
 }
 
-uint64_t HAL_read_sector(uint32_t index, uint8_t *buff)
+int32_t HAL_read_sector(uint32_t index, uint8_t *buff)
 {
+    uint16_t amount_of_jump_bytes = SIZE_OF_SECTOR_IN_BYTES * index;
+
     if (index < 0 || buff == NULL)
     {
-        return -1;
+        return _STATUS_FAIL;
     }
 
-    uint16_t amount_of_jump_bytes = SIZE_OF_SECTOR_IN_BYTES * index;
-    fseek(s_file, amount_of_jump_bytes, SEEK_SET);
-    return fread(buff, SIZE_OF_UINT8_T_IN_BYTES, SIZE_OF_SECTOR_IN_BYTES, s_file);
+    if (fseek(s_file, amount_of_jump_bytes, SEEK_SET) == 0)
+    {
+        return fread(buff, SIZE_OF_UINT8_T_IN_BYTES, SIZE_OF_SECTOR_IN_BYTES, s_file);
+    }
+    else
+    {
+        return _STATUS_FAIL;
+    }  
 }
 
 int32_t HAL_read_multi_sector(uint32_t index, uint32_t num, uint8_t *buff)
@@ -78,30 +100,54 @@ int32_t HAL_read_multi_sector(uint32_t index, uint32_t num, uint8_t *buff)
     //     }
     // }
     // return total_number_of_read_bytes;
+    uint32_t sector_couter = 0u;
+    int32_t amount_of_read_bytes = 0u;
+    uint8_t *temp = NULL;
+    int32_t total_number_of_read_bytes = 0u;
+
     if (num < 1 || buff == NULL)
     {
         return _STATUS_FAIL;
     }
 
-    uint32_t sector_couter = 0u;
-    int32_t amount_of_read_bytes = 0u;
-    uint8_t *temp = buff;
-    int32_t total_number_of_read_bytes = 0u;
+    temp = buff;
+    amount_of_read_bytes = HAL_read_sector(index, temp);
 
-    while (sector_couter < num)
+    if (amount_of_read_bytes != _STATUS_FAIL)
     {
-        amount_of_read_bytes = HAL_read_sector(index, temp);
         total_number_of_read_bytes += amount_of_read_bytes;
         sector_couter++;
         index++;
         temp += SIZE_OF_SECTOR_IN_BYTES;
+
+        while (sector_couter < num)
+        {
+            amount_of_read_bytes = HAL_read_sector(index, temp);
+            total_number_of_read_bytes += amount_of_read_bytes;
+            sector_couter++;
+            index++;
+            temp += SIZE_OF_SECTOR_IN_BYTES;
+        }
+        return total_number_of_read_bytes;
     }
-    return total_number_of_read_bytes;
+    else
+    {
+        return _STATUS_FAIL;
+    }
+    
 }
 
-uint64_t HAL_read_bytes_from_file(long int offset, uint8_t whence,\
+int32_t HAL_read_bytes_from_file(long int offset, uint8_t whence,\
                                     uint16_t number_of_bytes, uint8_t *buff)
 {
-    fseek(s_file, offset, whence);
-    return fread(buff, SIZE_OF_UINT8_T_IN_BYTES, number_of_bytes, s_file);
+    int32_t status = 0u;
+    if (fseek(s_file, offset, whence) == 0)
+    {
+        status = fread(buff, SIZE_OF_UINT8_T_IN_BYTES, number_of_bytes, s_file);
+    }
+    else
+    {
+        status = _STATUS_FAIL;
+    }
+    return status;
 }

@@ -4,15 +4,17 @@
 #include "HAL.h"
 #include "FAT12.h"
 #include "cluster_linked_list.h"
+#include "status_code.h"
 
 /*******************************************************************************
  * Prototypes
  ******************************************************************************/
-void set_boot_sector();
-void set_regions_address();
-void print_offset_of_regions();
+int8_t set_boot_sector();
+int8_t set_regions_address();
+int8_t print_offset_of_regions();
 static int8_t check_type_of_entry(FAT12_ENTRY_Typedef *entry);
 static int8_t entry_is_empty(FAT12_ENTRY_Typedef *entry);
+static void print_file_name_from_LNF_entry(FAT12_LFN_ENTRY_Typedef *entry);
 uint32_t print_entry_from_sector(uint32_t number_of_sector);
 int32_t get_entry_value_from_FAT(uint16_t number_of_cluster);
 int32_t get_entry_value_from_a_pair_cluster_entry\
@@ -20,17 +22,19 @@ int32_t get_entry_value_from_a_pair_cluster_entry\
 uint16_t get_physical_sector_of_root();
 void read_file_on_multi_sector(uint16_t starting_cluster_number);
 static void print_buffer(uint8_t *buff);
-void setup_FAT12_file();
+int8_t setup_FAT12_file();
 
 /*******************************************************************************
  * Variables
  ******************************************************************************/
 static FAT12_BOOT_SECTOR_Typedef s_boot_sector;
-static unsigned int s_boot_sector_address = 0u;
-static unsigned int s_fat_address = 512u; // Size of Boot Sector in FAT12 is 512 bytes
+static const unsigned int s_boot_sector_address = 0u;
+static const unsigned int s_fat_address = 512u; // Size of Boot Sector in FAT12 is 512 bytes
 static unsigned int s_root_directory_address = 0U;
 static unsigned int s_data_region_address = 0U;
 
+static uint8_t s_boot_sector_is_set = _IS_NOT_SET;
+static uint8_t s_regions_is_set = _IS_NOT_SET;
 static uint16_t s_number_of_bytes_per_sector = 0u;
 static uint8_t s_number_of_sector_per_cluster = 0u;
 static uint8_t s_number_of_fat = 0u;
@@ -40,11 +44,25 @@ static uint16_t s_physical_sector_of_root = 0U;
 /*******************************************************************************
  * Code
  ******************************************************************************/
-void set_boot_sector()
+int8_t set_boot_sector()
 {
-    set_file_ptr_position(0, SEEK_SET);
-    HAL_read_sector(0, (uint8_t*)(&s_boot_sector)); // ?? Just read 248 bytes
-
+    int8_t status = 0u;
+    if (set_file_ptr_position(0, SEEK_SET) == _STATUS_SUCCESS)
+    {
+        if (HAL_read_sector(0, (uint8_t*)(&s_boot_sector)) != _STATUS_FAIL) /* Just read 248 bytes */
+        {
+            status = _STATUS_SUCCESS;
+            s_boot_sector_is_set = _IS_SET;
+        }
+        else
+        {
+            status = _STATUS_FAIL;
+        }
+    }
+    else
+    {
+        status = _STATUS_FAIL;
+    }
     // FAT12_BOOT_SECTOR_Typedef *boot_ptr = &s_boot_sector;
     // printf("Manufacture desc: ");
     // for (int i = 0; i < 8; i++)
@@ -53,36 +71,55 @@ void set_boot_sector()
     // }
     // printf("\n");
     // printf("Number of bytes per sector: %d bytes\n", *(uint16_t *)(boot_ptr->NUMBER_OF_BYTES_PER_SECTOR));
-    return;
+    return status;
 }
 
-void set_regions_address()
+int8_t set_regions_address()
 {
-    s_number_of_bytes_per_sector = *(uint16_t *)(s_boot_sector.NUMBER_OF_BYTES_PER_SECTOR);
-    s_number_of_sector_per_cluster = *(uint8_t *)(s_boot_sector.NUMBER_OF_SECTORS_PER_CLUSTER);
-    s_number_of_fat = *(uint8_t *)(s_boot_sector.NUMBER_OF_FAT);
-    s_number_of_sector_per_fat = *(uint16_t *)(s_boot_sector.NUMBER_OF_SECTORS_PER_FAT);
-    uint16_t number_of_rdet = *(uint16_t *)(s_boot_sector.NUMBER_OF_RDET); //Number of root directory entry (RDET)
+    int8_t status = 0u;
+    if (s_boot_sector_is_set == _IS_SET)
+    {
+        s_number_of_bytes_per_sector = *(uint16_t *)(s_boot_sector.NUMBER_OF_BYTES_PER_SECTOR);
+        s_number_of_sector_per_cluster = *(uint8_t *)(s_boot_sector.NUMBER_OF_SECTORS_PER_CLUSTER);
+        s_number_of_fat = *(uint8_t *)(s_boot_sector.NUMBER_OF_FAT);
+        s_number_of_sector_per_fat = *(uint16_t *)(s_boot_sector.NUMBER_OF_SECTORS_PER_FAT);
+        uint16_t number_of_rdet = *(uint16_t *)(s_boot_sector.NUMBER_OF_RDET); //Number of root directory entry (RDET)
 
-    s_root_directory_address = s_fat_address\
-        + s_number_of_fat * (s_number_of_sector_per_fat * s_number_of_bytes_per_sector);
+        s_root_directory_address = s_fat_address\
+            + s_number_of_fat * (s_number_of_sector_per_fat * s_number_of_bytes_per_sector);
 
-    s_data_region_address = s_root_directory_address\
-        + number_of_rdet * SIZE_OF_ENTRY_IN_BYTES;
+        s_data_region_address = s_root_directory_address\
+            + number_of_rdet * SIZE_OF_ENTRY_IN_BYTES;
 
-    s_physical_sector_of_root = SIZE_OF_BOOT_SECTOR_IN_SECTORS + s_number_of_fat * s_number_of_sector_per_fat;
-    // printf("Starting sector of root: %d\n", s_physical_sector_of_root);
-    return;
+        s_physical_sector_of_root = SIZE_OF_BOOT_SECTOR_IN_SECTORS + s_number_of_fat * s_number_of_sector_per_fat;
+        // printf("Starting sector of root: %d\n", s_physical_sector_of_root);
+        status = _STATUS_SUCCESS;
+        s_regions_is_set = _IS_SET;
+    }
+    else
+    {
+        status = _STATUS_FAIL;
+    }
+    return status;
 }
 
-void print_offset_of_regions()
+int8_t print_offset_of_regions()
 {
-    printf("Regions Address (offset in hex): \n");
-    printf("Boot sector: %x\n", s_boot_sector_address);
-    printf("FAT: %x\n", s_fat_address); 
-    printf("Root directory: %x\n", s_root_directory_address);
-    printf("Data: %x\n", s_data_region_address);
-    return;
+    int8_t status = 0U;
+    if (s_regions_is_set == _IS_SET)
+    {
+        printf("Regions Address (offset in hex): \n");
+        printf("Boot sector: %x\n", s_boot_sector_address);
+        printf("FAT: %x\n", s_fat_address); 
+        printf("Root directory: %x\n", s_root_directory_address);
+        printf("Data: %x\n", s_data_region_address);
+        status = _STATUS_SUCCESS;
+    }
+    else
+    {
+        status = _STATUS_FAIL;
+    }
+    return status;
 }
 
 static int8_t check_type_of_entry(FAT12_ENTRY_Typedef* entry)
@@ -116,34 +153,45 @@ static int8_t entry_is_empty(FAT12_ENTRY_Typedef* entry)
     for (i = 0; i < 4; i++)
     {
         if (check != 0)
-            return 1;
+            return _IS_FALSE;
         check = *((uint64_t *)(entry) + i);
     }
-    return -1;
+    return _IS_TRUE;
 }
 
-void print_file_name_from_LNF_entry(FAT12_LFN_ENTRY_Typedef* entry)
+static void print_file_name_from_LNF_entry(FAT12_LFN_ENTRY_Typedef* entry)
 {
-    int i;
-    for (i = 0; i < 5; i++)
+    // int8_t status = 0U;
+    uint8_t i = 0U;
+    for (i = 0; i < NUMBER_OF_LOW_FILE_NAME_CHARACTER; i++)
     {
         printf("%c", *((uint16_t *)(entry->LOW_FILE_NAME) + i));
     }
 
-    for (i = 0; i < 6; i++)
+    for (i = 0; i < NUMBER_OF_MID_FILE_NAME_CHARACTER; i++)
     {
         printf("%c", *((uint16_t *)(entry->MID_FILE_NAME) + i));
     }
 
-    for (i = 0; i < 5; i++)
+    for (i = 0; i < NUMBER_OF_HIGH_FILE_NAME_CHARACTER; i++)
     {
         printf("%c", *((entry->HIGH_FILE_NAME) + i));
     }
+    // status = _STATUS_SUCCESS;
+    // if (check_type_of_entry(entry) == _LFN)
+    // {
+        
+    // }
+    // else
+    // {
+    //     status = _STATUS_FAIL;
+    // }
+    // return status;
 }
 
 void printf_file_info_of_entry(FAT12_ENTRY_Typedef* entry)
 {
-    int i;
+    uint8_t i = 0U;
 
     for (i = 0; i < 8; i++)
     {
@@ -162,10 +210,8 @@ void printf_file_info_of_entry(FAT12_ENTRY_Typedef* entry)
             printf("%c", (entry->FILE_NAME_EXTENSION)[i]);
         }
     }
-
     // uint16_t starting_cluster_number = *(uint16_t *)(entry->STARTING_CLUSTER_NUMBER);
     // printf("    %d", starting_cluster_number);
-
 }
 
 uint32_t print_entry_from_sector(uint32_t physical_sector_index)
@@ -182,7 +228,7 @@ uint32_t print_entry_from_sector(uint32_t physical_sector_index)
     HAL_read_bytes_from_file(number_of_jump_bytes, SEEK_SET, SIZE_OF_ENTRY_IN_BYTES, (uint8_t *)(&buff));
     entry = (FAT12_ENTRY_Typedef *)(&buff);
 
-    while (entry_is_empty((FAT12_ENTRY_Typedef*)(&buff)) == 1)
+    while (entry_is_empty((FAT12_ENTRY_Typedef*)(&buff)) == _IS_FALSE)
     {
         if (*(uint8_t*)(entry) != SIGNATURE_FIRST_BYTE_OF_FOLDER_ENTRY)
         {
@@ -276,9 +322,9 @@ int32_t get_entry_value_from_FAT(uint16_t number_of_cluster)
     uint16_t number_of_jump_bytes = s_fat_address + (uint16_t)(3 * (number_of_cluster / (uint16_t)2) );
 
     FAT12_PAIR_CLUSTER_Typedef pair_cluster_status;
-    if (HAL_read_bytes_from_file(number_of_jump_bytes, SEEK_SET, 3, (uint8_t*)(&pair_cluster_status)) == 0)
+    if (HAL_read_bytes_from_file(number_of_jump_bytes, SEEK_SET, 3, (uint8_t*)(&pair_cluster_status)) == _STATUS_FAIL)
     {
-        return -1;
+        return _STATUS_FAIL;
     }
     // printf("%d %d %d\n", pair_cluster_status.fst_byte, pair_cluster_status.snd_byte, pair_cluster_status.thrd_byte);
     return get_entry_value_from_a_pair_cluster_entry(pair_cluster_status, (uint8_t)(number_of_cluster % 2));
@@ -286,7 +332,7 @@ int32_t get_entry_value_from_FAT(uint16_t number_of_cluster)
 
 int32_t get_entry_value_from_a_pair_cluster_entry (FAT12_PAIR_CLUSTER_Typedef pair_entry, uint8_t order) // hiểu kiểu lưu trữ entry
 {
-    int32_t result = -1;
+    int32_t result = _STATUS_FAIL;
     if (order == _LOWER_ENTRY) // lower entry
     {
         result = (uint16_t)(uint8_t)((pair_entry.snd_byte) <<  4) << 4 | (uint16_t)(pair_entry.fst_byte); // Chú ý ép kiểu ngầm định
@@ -323,7 +369,7 @@ void read_file_on_multi_sector(uint16_t starting_cluster_number)
     // } while (next_cluster_number != EOF_VALUE_OF_SECTOR && next_cluster_number != -1);
     } while (next_cluster_number >= MIN_VALUE_OF_DATA_CLUSTER &&\
             next_cluster_number <= MAX_VALUE_OF_DATA_CLUSTER &&\
-            next_cluster_number != -1);
+            next_cluster_number != _STATUS_FAIL);
 
     // printf("~");
 }
@@ -338,7 +384,17 @@ static void print_buffer(uint8_t* buff)
     }
 }
 
-void setup_FAT12_file()
+int8_t setup_FAT12_file()
 {
-    print_entry_from_sector(s_physical_sector_of_root);
+    int8_t status = 0U;
+    if (s_physical_sector_of_root != 0)
+    {
+        print_entry_from_sector(s_physical_sector_of_root);
+        status = _STATUS_SUCCESS;
+    }
+    else
+    {
+        status = _STATUS_FAIL;
+    }
+    return status;
 }
