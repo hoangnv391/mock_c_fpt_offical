@@ -32,6 +32,7 @@ static unsigned int s_root_directory_address = 0U;
 static unsigned int s_data_region_address = 0U;
 
 static uint16_t s_number_of_bytes_per_sector = 0u;
+static uint8_t s_number_of_sector_per_cluster = 0u;
 static uint8_t s_number_of_fat = 0u;
 static uint16_t s_number_of_sector_per_fat = 0u;
 static uint16_t s_physical_sector_of_root = 0U;
@@ -58,6 +59,7 @@ void set_boot_sector()
 void set_regions_address()
 {
     s_number_of_bytes_per_sector = *(uint16_t *)(s_boot_sector.NUMBER_OF_BYTES_PER_SECTOR);
+    s_number_of_sector_per_cluster = *(uint8_t *)(s_boot_sector.NUMBER_OF_SECTORS_PER_CLUSTER);
     s_number_of_fat = *(uint8_t *)(s_boot_sector.NUMBER_OF_FAT);
     s_number_of_sector_per_fat = *(uint16_t *)(s_boot_sector.NUMBER_OF_SECTORS_PER_FAT);
     uint16_t number_of_rdet = *(uint16_t *)(s_boot_sector.NUMBER_OF_RDET); //Number of root directory entry (RDET)
@@ -313,7 +315,9 @@ void read_file_on_multi_sector(uint16_t starting_cluster_number)
         physical_sector_number = PHYSICAL_SECTOR_NUMBER(next_cluster_number);
         uint8_t buff[512] = {0};
         // printf("%d ", next_cluster_number);
-        amount_of_read_bytes = HAL_read_sector(physical_sector_number, (uint8_t *)(&buff));
+        // amount_of_read_bytes = HAL_read_sector(physical_sector_number, (uint8_t *)(&buff));
+        amount_of_read_bytes = HAL_read_multi_sector(physical_sector_number,
+            s_number_of_sector_per_cluster, (uint8_t *)(&buff));
         print_buffer((uint8_t *)(&buff));
         next_cluster_number = get_entry_value_from_FAT(next_cluster_number);
     // } while (next_cluster_number != EOF_VALUE_OF_SECTOR && next_cluster_number != -1);
@@ -327,7 +331,7 @@ void read_file_on_multi_sector(uint16_t starting_cluster_number)
 static void print_buffer(uint8_t* buff)
 {
     uint8_t *temp = buff;
-    while (*temp != 0)
+    while (*temp != 0x00)
     {
         printf("%c", *temp);
         temp++;

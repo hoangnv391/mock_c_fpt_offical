@@ -18,7 +18,7 @@ int main()
     // printf("Result: %d\n", open_file("floppy.img"));
     // set_boot_sector();
     // set_regions_address();
-//    print_offset_of_regions();
+    // print_offset_of_regions();
     // print_entry_from_sector(19);
     setup();
     CLUSTER_NODE_Typedef *chosen_node = NULL;
